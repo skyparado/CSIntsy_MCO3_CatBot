@@ -9,8 +9,8 @@ from cat_env import make_env
 # TODO: YOU MAY ADD ADDITIONAL IMPORTS OR FUNCTIONS HERE.                   #
 #############################################################################
 
-
-
+def compute_reward(terminated: bool) -> float:
+    return 1.0 if terminated else 0.0
 
 
 
@@ -38,7 +38,14 @@ def train_bot(cat_name, render: int = -1):
     # Hint: You may want to declare variables for the hyperparameters of the    #
     # training process such as learning rate, exploration rate, etc.            #
     #############################################################################
-    
+    alpha = 0.1
+    gamma = 0.95
+
+    epsilon = 1.0
+    epsilon_min = 0.05
+    epsilon_decay = (epsilon_min / epsilon) ** (1.0 / episodes)
+
+    max_steps_per_episode = 100
     
 
 
@@ -64,10 +71,31 @@ def train_bot(cat_name, render: int = -1):
         # 3. Take the action and observe the next state.                             #
         # 4. Since this environment doesn't give rewards, compute reward manually    #
         # 5. Update the Q-table accordingly based on agent's rewards.                #
-        ############################################################################## 
-               
-        
+        ##############################################################################
+        state, _ = env.reset()
+        done = False
+        steps = 0
 
+        while not done and steps < max_steps_per_episode:
+            if random.random() < epsilon:
+                action = env.action_space.sample()
+            else:
+                action = int(np.argmax(q_table[state]))
+
+            next_state, _, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
+
+            reward = compute_reward(terminated)
+
+            best_next_value = np.max(q_table[next_state])
+            td_target = reward + (0.0 if done else gamma * best_next_value)
+            td_error = td_target - q_table[state][action]
+            q_table[state][action] += alpha * td_error
+
+            state = next_state
+            steps += 1
+
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
 
 
