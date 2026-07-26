@@ -5,15 +5,53 @@ import numpy as np
 import pygame
 from utility import play_q_table
 from cat_env import make_env
+
+# --- Reward hyperparameters -------------------------------------------------
+STEP_PENALTY = -0.1     # small constant cost per step, discourages dawdling
+CATCH_BONUS = 20.0      # large terminal reward, dominates shaping/step terms
+SHAPING_WEIGHT = 1.0    # scales the potential-based shaping term
+
 #############################################################################
 # TODO: YOU MAY ADD ADDITIONAL IMPORTS OR FUNCTIONS HERE.                   #
 #############################################################################
 
-def compute_reward(terminated: bool) -> float:
-    return 1.0 if terminated else 0.0
+def decode_state(state: int):
+    """
+    Decode the 4-digit state int into bot/cat (row, col) positions.
+    State format: RRCCrrcc where the FIRST two digits are CatBot's
+    (row, col) and the LAST two digits are the cat's (row, col), per
+    the project spec (e.g. state 2305 -> bot at (2,3), cat at (0,5)).
+    """
+    bot_row = state // 1000
+    bot_col = (state // 100) % 10
+    cat_row = (state // 10) % 10
+    cat_col = state % 10
+    return bot_row, bot_col, cat_row, cat_col
+
+def manhattan_distance(state: int) -> int:
+    #Manhattan distance between CatBot and the cat for a given state.
+    bot_row, bot_col, cat_row, cat_col = decode_state(state)
+    return abs(bot_row - cat_row) + abs(bot_col - cat_col)
+
+def potential(state: int) -> float:
+    """
+    Potential function for reward shaping: higher (less negative) when
+    CatBot is closer to the cat. Using -distance means potential increases
+    as the agent closes the gap, which is what we want to reward.
+    """
+    return -float(manhattan_distance(state))
 
 
-
+def compute_reward(state: int, next_state: int, terminated: bool, gamma: float) -> float:
+    reward = STEP_PENALTY
+    
+    if terminated:
+        reward += CATCH_BONUS
+    else:
+        shaping = gamma * potential(next_state) - potential(state)
+        reward += SHAPING_WEIGHT * shaping
+    
+    return reward
 
 
 #############################################################################
@@ -47,16 +85,6 @@ def train_bot(cat_name, render: int = -1):
 
     max_steps_per_episode = 100
     
-
-
-
-
-
-
-
-
-
-    
     #############################################################################
     # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
     #############################################################################
@@ -85,7 +113,7 @@ def train_bot(cat_name, render: int = -1):
             next_state, _, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
-            reward = compute_reward(terminated)
+            reward = compute_reward(state, next_state, terminated, gamma)
 
             best_next_value = np.max(q_table[next_state])
             td_target = reward + (0.0 if done else gamma * best_next_value)
@@ -97,35 +125,6 @@ def train_bot(cat_name, render: int = -1):
 
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
         
         #############################################################################
         # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
