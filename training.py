@@ -7,10 +7,13 @@ from utility import play_q_table
 from cat_env import make_env
 
 # --- Reward hyperparameters -------------------------------------------------
-STEP_PENALTY = -0.1     # small constant cost per step, discourages dawdling
-CATCH_BONUS = 20.0      # large terminal reward, dominates shaping/step terms
+STEP_PENALTY = -0.2     # small constant cost per step, discourages dawdling
+                        # CHANGE: adjusted to -0.2 to encourage more exploration and prevent the bot from standing still
+CATCH_BONUS = 100.0     # large terminal reward, dominates shaping/step terms
+                        # CHANGE: increased to make catching more rewarding and emphasize goal
 SHAPING_WEIGHT = 1.0    # scales the potential-based shaping term
-
+WALL_PENALTY = -2.0     # CHANGE: added penalty for bumping into walls to discourage invalid moves
+DISTANCE_PENALTY = -1.8  # CHANGE: added penalty for moving away/staying at the same distance from the cat to encourage pursuit
 #############################################################################
 # TODO: YOU MAY ADD ADDITIONAL IMPORTS OR FUNCTIONS HERE.                   #
 #############################################################################
@@ -43,16 +46,26 @@ def potential(state: int) -> float:
 
 
 def compute_reward(state: int, next_state: int, terminated: bool, gamma: float) -> float:
-    reward = STEP_PENALTY
-    
+    #CHANGE: shifted from Potential-Based Reward Shaping (PBRS) to Heuristic Reward Shaping (HRS) with 
+    #     negative intermidate rewards so naka-lock in lang yung agent with avoiding bigger negative rewards
     if terminated:
-        reward += CATCH_BONUS
-    else:
-        shaping = gamma * potential(next_state) - potential(state)
-        reward += SHAPING_WEIGHT * shaping
+        return CATCH_BONUS # caught the cat, give big positive reward
     
-    return reward
-
+    bot_r, bot_c, cat_r, cat_c = decode_state(state)
+    next_bot_r, next_bot_c, _, _ = decode_state(next_state)
+    
+    if bot_r == next_bot_r and bot_c == next_bot_c:
+        return WALL_PENALTY # penalize bumping into walls 
+    
+    # compute Manhattan distances before and after the action
+    dist_old = abs(bot_r - cat_r) + abs(bot_c - cat_c)
+    dist_new = abs(next_bot_r - cat_r) + abs(next_bot_c - cat_c)
+    
+    # strictly negative intermediate rewards prevent positive Q-value loop traps (i.e staying in place forever coz that would not give a negative reward)
+    if dist_new < dist_old:
+        return STEP_PENALTY   # small negative reward for moving closer to the cat
+    else:
+        return DISTANCE_PENALTY  # large negative reward for moving away or staying at the same distance from the cat
 
 #############################################################################
 # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
@@ -76,15 +89,16 @@ def train_bot(cat_name, render: int = -1):
     # Hint: You may want to declare variables for the hyperparameters of the    #
     # training process such as learning rate, exploration rate, etc.            #
     #############################################################################
-    alpha = 0.1
-    gamma = 0.95
+    alpha = 0.3     # CHANGE: make learning rate more aggressive
+    gamma = 0.98    # CHANGE: increase discount factor to prioritize long-term rewards
 
     epsilon = 1.0
-    epsilon_min = 0.05
-    epsilon_decay = (epsilon_min / epsilon) ** (1.0 / episodes)
+    epsilon_min = 0.01
+    epsilon_decay = (1.0 - epsilon_min) / (episodes * 0.85) # CHANGE: slower decay to allow more exploration in early training
 
-    max_steps_per_episode = 100
-    
+    max_steps_per_episode = 60 # CHANGE: limit max steps to 60 so bot is forced to catch within the limit
+    total_steps = 0
+
     #############################################################################
     # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
     #############################################################################
@@ -123,9 +137,13 @@ def train_bot(cat_name, render: int = -1):
             state = next_state
             steps += 1
 
-        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        epsilon = max(epsilon_min, epsilon - epsilon_decay)
+        total_steps += steps
 
-        
+        if ep == episodes:
+            print(f"Training complete! Total steps taken: {total_steps}")
+            print(f"Average steps per episode: {total_steps / episodes:.2f}")
+
         #############################################################################
         # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
         #############################################################################

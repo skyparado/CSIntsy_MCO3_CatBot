@@ -1,5 +1,6 @@
 import argparse
 from cat_env import make_env
+from evaluation import evaluate_q_table
 from training import train_bot
 from utility import play_q_table
 
@@ -22,13 +23,20 @@ def main():
         cat_name=args.cat,
         render=args.render
     )
+   
+   # comment out when not testing 
+    evaluate_q_table(q_table, cat_name=args.cat, num_episodes=100, max_steps=60)
     
     print("\nTraining complete! Starting game with trained bot...")
     print("Press Q to quit.")
     
     # Play using the trained Q-table
     env = make_env(cat_type=args.cat)
-    play_q_table(env, q_table, max_steps=60, window_title='Cat Chase - Final Trained Bot')
-
+    result = play_q_table(env, q_table, max_steps=60, window_title='Cat Chase - Final Trained Bot')
+    if result:
+        print("The bot successfully caught the cat!")
+    else:
+        print("The bot failed to catch the cat.")
+        
 if __name__ == "__main__":
     main()

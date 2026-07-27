@@ -8,6 +8,8 @@ from gymnasium import spaces
 import numpy as np
 import pygame
 
+import custom_kitties
+
 class Cat(ABC):
     def __init__(self, grid_size: int, tile_size: int):
         self.grid_size = grid_size
@@ -258,18 +260,30 @@ class TrainerCat(Cat):
     Helper methods:
     - self.player_moved_closer(): Returns True if player's last move decreased distance
     """
+    _has_printed_banner = False  
+
+    def __init__(self, grid_size: int, tile_size: int):
+        super().__init__(grid_size, tile_size)
+        
+        self.behavior_name, self.current_behavior = custom_kitties.get_locked_behavior()
+        
+        # Print the type of TrainerCat at the start of the game.
+        if not TrainerCat._has_printed_banner:
+            print("\n" + "=" * 50)
+            print(f"TrainerCat locked in as: {self.behavior_name}")
+            print("=" * 50 + "\n")
+            TrainerCat._has_printed_banner = True
+
     def _get_sprite_path(self) -> str:
         return "images/trainer-dp.png"
     
+    def reset(self, pos: np.ndarray) -> None:
+        super().reset(pos)
+
     def move(self) -> None:
-        # Students can implement their own cat behavior here
-        # This is a dummy implementation that stays still
-        # You can:
-        # 1. Access player information (position, last action)
-        # 2. Check distances
-        # 3. Implement your own movement strategy
-        # 4. Test different learning algorithms
-        return
+        if self.current_behavior:
+            self.current_behavior(self)
+    
 
 #######################################
 # END OF CAT BEHAVIOR IMPLEMENTATIONS #
