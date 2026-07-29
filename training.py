@@ -3,6 +3,7 @@ import time
 from typing import Dict
 import numpy as np
 import pygame
+import custom_kitties
 from utility import play_q_table
 from cat_env import make_env
 
@@ -17,6 +18,7 @@ DISTANCE_PENALTY = -1.8  # CHANGE: added penalty for moving away/staying at the 
 #############################################################################
 # TODO: YOU MAY ADD ADDITIONAL IMPORTS OR FUNCTIONS HERE.                   #
 #############################################################################
+
 
 def decode_state(state: int):
     """
@@ -99,6 +101,13 @@ def train_bot(cat_name, render: int = -1):
     max_steps_per_episode = 60 # CHANGE: limit max steps to 60 so bot is forced to catch within the limit
     total_steps = 0
 
+#New things added Ken (burnin steps and noise steps)
+    max_burnin_steps = 10 
+    burnin_episode_fraction = 0.9
+    noise_env = make_env(cat_type="trainer")
+    noise_episode_fraction = 0.1
+    noise_steps_per_round = 20
+
     #############################################################################
     # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #
     #############################################################################
@@ -117,6 +126,16 @@ def train_bot(cat_name, render: int = -1):
         state, _ = env.reset()
         done = False
         steps = 0
+
+#New add Ken (burnin steps)
+        if random.random() < burnin_episode_fraction:
+            burnin_steps = random.randint(0, max_burnin_steps)
+            for _ in range(burnin_steps):
+                burnin_action = env.action_space.sample()
+                state, _, burnin_terminated, burnin_truncated, _ = env.step(burnin_action)
+                if burnin_terminated or burnin_truncated:
+                    state, _ = env.reset()
+                    break
 
         while not done and steps < max_steps_per_episode:
             if random.random() < epsilon:
@@ -140,9 +159,37 @@ def train_bot(cat_name, render: int = -1):
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
         total_steps += steps
 
-        if ep == episodes:
-            print(f"Training complete! Total steps taken: {total_steps}")
-            print(f"Average steps per episode: {total_steps / episodes:.2f}")
+#new add Ken (noise steps)
+        if random.random() < noise_episode_fraction:
+                    noise_behavior_name, noise_behavior_fn = random.choice(list(custom_kitties.BEHAVIOR_DICT.values()))
+                    noise_env.cat.behavior_name = noise_behavior_name
+                    noise_env.cat.current_behavior = noise_behavior_fn
+
+                    noise_state, _ = noise_env.reset()
+                    noise_done = False
+                    noise_steps = 0
+                    while not noise_done and noise_steps < noise_steps_per_round:
+                        if random.random() < epsilon:
+                            noise_action = noise_env.action_space.sample()
+                        else:
+                            noise_action = int(np.argmax(q_table[noise_state]))
+
+                        next_noise_state, _, noise_terminated, noise_truncated, _ = noise_env.step(noise_action)
+                        noise_done = noise_terminated or noise_truncated
+
+                        noise_reward = compute_reward(noise_state, next_noise_state, noise_terminated, gamma)
+
+                        best_next_value = np.max(q_table[next_noise_state])
+                        td_target = noise_reward + (0.0 if noise_done else gamma * best_next_value)
+                        td_error = td_target - q_table[noise_state][noise_action]
+                        q_table[noise_state][noise_action] += alpha * td_error
+
+                        noise_state = next_noise_state
+                        noise_steps += 1
+
+                        if ep == episodes:
+                            print(f"Training complete! Total steps taken: {total_steps}")
+                            print(f"Average steps per episode: {total_steps / episodes:.2f}")
 
         #############################################################################
         # END OF YOUR CODE. DO NOT MODIFY ANYTHING BEYOND THIS LINE.                #

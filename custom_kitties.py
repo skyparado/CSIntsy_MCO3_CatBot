@@ -8,9 +8,10 @@ import random
 #   "edge"      -> Peter (Perimeter/Wallhugger)
 #   "skittish" -> Jigu (Flees when approached)
 #   "matador"   -> Manolo (Center arena & dodge)
+ #   "Loki"      -> Split-Personality (Randomly switches between the above) DELETE AFTER FOR FINAL SUBMISSION
 #   "random"    -> Pick a random kitty per run
 # =====================================================================
-SELECTED_KITTY = "matador"  # <--- CHANGE THIS TO YOUR CHOICE!
+SELECTED_KITTY = "Loki"  # <--- CHANGE THIS TO YOUR CHOICE!
 # =====================================================================
 
 
@@ -182,11 +183,34 @@ def move_matador(cat):
             cat.pos[0] = chosen[0]
             cat.pos[1] = chosen[1]
 
+
+def move_split_personality(cat): #delete after for final submission (SPLIT PERSONALITY CAT)
+    """
+        New code number 2 (a genuinely new cat, not part of the original 4).
+        This cat has no single pattern -- every few moves it randomly picks a
+        NEW personality from chess/edge/skittish/matador and acts like that
+        cat for a handful of turns, then switches again. Good for stress
+        testing: since the pattern itself keeps changing mid-game, the bot
+        can't just memorize "one strategy beats this cat."
+    """
+    sub_behaviors = [move_chess, move_wallhugger, move_skittish, move_matador]
+
+    # Stash a little memory directly on the cat object: which personality
+    # it's currently "wearing", and how many more moves before it might
+    # switch again. Plain Python attributes, nothing fancy.
+    if not hasattr(cat, "_personality_countdown") or cat._personality_countdown <= 0:
+        cat._current_personality = random.choice(sub_behaviors)
+        cat._personality_countdown = random.randint(2, 5)  # stays in character for 2-5 moves
+
+    cat._personality_countdown -= 1
+    cat._current_personality(cat)
+
 BEHAVIOR_DICT = {
     "chess": ("Iracebeth (Chess Cat)", move_chess),
     "edge": ("Peter (Edge Cat)", move_wallhugger),
     "skittish": ("Jigu (Skittish Cat)", move_skittish),
-    "matador": ("Manolo (Matador Cat)", move_matador)
+    "matador": ("Manolo (Matador Cat)", move_matador),
+    "split": ("Loki (Split-Personality Cat)", move_split_personality),  #delete after for final submission
 }
 
 def get_locked_behavior():
