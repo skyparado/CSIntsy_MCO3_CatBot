@@ -11,7 +11,10 @@ import random
  #   "Loki"      -> Split-Personality (Randomly switches between the above) DELETE AFTER FOR FINAL SUBMISSION
 #   "random"    -> Pick a random kitty per run
 # =====================================================================
-SELECTED_KITTY = "Loki"  # <--- CHANGE THIS TO YOUR CHOICE!
+SELECTED_KITTY = "split"  # <--- CHANGE THIS TO YOUR CHOICE!
+# NOTE: this must be one of the BEHAVIOR_DICT keys below ("chess", "edge",
+# "skittish", "matador", "split"). Anything else -- "Loki" included -- silently
+# falls through to a random pick, which makes runs non-reproducible.
 # =====================================================================
 
 

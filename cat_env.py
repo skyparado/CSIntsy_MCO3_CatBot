@@ -8,8 +8,6 @@ from gymnasium import spaces
 import numpy as np
 import pygame
 
-import custom_kitties
-
 class Cat(ABC):
     def __init__(self, grid_size: int, tile_size: int):
         self.grid_size = grid_size
@@ -264,8 +262,14 @@ class TrainerCat(Cat):
 
     def __init__(self, grid_size: int, tile_size: int):
         super().__init__(grid_size, tile_size)
-        
-        self.behavior_name, self.current_behavior = custom_kitties.get_locked_behavior()
+
+        # custom_kitties is our own add-on, so fall back to the original
+        # stay-in-place behaviour if it is not present.
+        try:
+            import custom_kitties
+            self.behavior_name, self.current_behavior = custom_kitties.get_locked_behavior()
+        except ImportError:
+            self.behavior_name, self.current_behavior = "stationary (default)", None
         
         # Print the type of TrainerCat at the start of the game.
         if not TrainerCat._has_printed_banner:
