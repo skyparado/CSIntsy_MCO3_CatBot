@@ -22,5 +22,5 @@ for cat in CATS:
     evaluate_q_table(q_table, cat_name="trainer", num_episodes=100, max_steps=60)
 
 print(f"\n{'#'*60}")
-print("# DONE. Copy everything above and paste it back to Claude.")
+print("# DONE. Training and evaluation complete for all cats.")
 print(f"{'#'*60}")

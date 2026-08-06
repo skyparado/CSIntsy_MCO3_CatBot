@@ -119,7 +119,7 @@ def train_bot(cat_name, render: int = -1):
             noise_env = make_env(cat_type="trainer")
         except Exception:
             noise_env = None
-    noise_episode_fraction = 0.1
+    noise_episode_fraction = 0
     noise_steps_per_round = 20
     
     for ep in range(1, episodes + 1):

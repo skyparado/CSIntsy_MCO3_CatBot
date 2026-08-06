@@ -67,6 +67,10 @@ class Cat(ABC):
             if abs(diff) > 0.01:
                 self.visual_pos[i] += np.clip(diff * animation_speed * dt, -1, 1)
 
+####################################
+# CAT BEHAVIOR IMPLEMENTATIONS     #
+####################################
+
 class BatmeowCat(Cat):
     def _get_sprite_path(self) -> str:
         return "images/batmeow-dp.png"
@@ -229,8 +233,31 @@ class SquiddyboiCat(Cat):
         new_c = min(max(0, self.pos[1] - dc), self.grid_size - 1)
         self.pos[0] = new_r
         self.pos[1] = new_c
+        
+#####################################
+# TRAINER CAT IMPLEMENTATION        #
+#####################################
+# You can modify the behavior of    #
+# this cat to test your learning    #
+# algorithm. This cat will not part #
+# of the grading.                   #
+#####################################
 
 class TrainerCat(Cat):
+    """A customizable cat for students to implement and test their own behavior algorithms.
+        
+        This cat provides access to:
+        - self.pos: Current cat position as [row, col]
+        - self.player_pos: Current player position
+        - self.prev_player_pos: Previous player position
+        - self.last_player_action: Last action (0:Up, 1:Down, 2:Left, 3:Right)
+        - self.current_distance: Current Manhattan distance to player
+        - self.prev_distance: Previous Manhattan distance to player
+        - self.grid_size: Size of the grid (e.g., 8 for 8x8 grid)
+        
+        Helper methods:
+        - self.player_moved_closer(): Returns True if player's last move decreased distance
+        """
     _has_printed_banner = False  
 
     def __init__(self, grid_size: int, tile_size: int):
@@ -255,11 +282,28 @@ class TrainerCat(Cat):
         super().reset(pos)
 
     def move(self) -> None:
+         # Students can implement their own cat behavior here
+                # This is a dummy implementation that stays still
+                # You can:
+                # 1. Access player information (position, last action)
+                # 2. Check distances
+                # 3. Implement your own movement strategy
+                # 4. Test different learning algorithms
         if self.current_behavior:
             self.current_behavior(self)
     
+#######################################
+# END OF CAT BEHAVIOR IMPLEMENTATIONS #
+#######################################
 
 class CatChaseEnv(gym.Env):
+    """Simple 8x8 grid world where an agent tries to catch a randomly moving cat.
+    
+        Observation: Dict with 'agent' and 'cat' positions as (row, col) each in [0..7].
+        Action space: Discrete(4) -> 0:Up,1:Down,2:Left,3:Right
+        Reward: +1 when agent catches cat (episode ends), -0.01 per step to encourage speed.
+        """
+        
     metadata = {"render.modes": ["human"]}
 
     def __init__(self, grid_size: int = 8, tile_size: int = 64, cat_type: str = "peekaboo"):
