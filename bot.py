@@ -16,7 +16,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Train the agent
     print(f"\nTraining agent against {args.cat} cat...")
     q_table = train_bot(
         cat_name=args.cat,
@@ -26,7 +25,6 @@ def main():
     print("\nTraining complete! Starting game with trained bot...")
     print("Press Q to quit.")
     
-    # Play using the trained Q-table
     env = make_env(cat_type=args.cat)
     play_q_table(env, q_table, max_steps=60, window_title='Cat Chase - Final Trained Bot')
 

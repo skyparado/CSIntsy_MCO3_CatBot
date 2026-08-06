@@ -1,27 +1,10 @@
 import random
 
-# =====================================================================
-# CUSTOM KITTY SELECTION
-# =====================================================================
-# Set this to the kitty you want to practice on!
-#   "chess"     -> Iracebeth (Knight/Bishop moves)
-#   "edge"      -> Peter (Perimeter/Wallhugger)
-#   "skittish" -> Jigu (Flees when approached)
-#   "matador"   -> Manolo (Center arena & dodge)
- #   "Loki"      -> Split-Personality (Randomly switches between the above) DELETE AFTER FOR FINAL SUBMISSION
-#   "random"    -> Pick a random kitty per run
-# =====================================================================
-SELECTED_KITTY = "split"  # <--- CHANGE THIS TO YOUR CHOICE!
-# NOTE: this must be one of the BEHAVIOR_DICT keys below ("chess", "edge",
-# "skittish", "matador", "split"). Anything else -- "Loki" included -- silently
-# falls through to a random pick, which makes runs non-reproducible.
-# =====================================================================
+
+SELECTED_KITTY = "split" 
 
 
 def move_chess(cat):
-    """
-        The cat is programmed to use chess moves like a Knight (L-shape) or Bishop (Diagonal).
-    """
     knight_moves = [(2,1), (2,-1), (-2,1), (-2,-1), (1,2), (1,-2), (-1,2), (-1,-2)]
     bishop_moves = [(1,1), (1,-1), (-1,1), (-1,-1)]
     all_moves = knight_moves + bishop_moves
@@ -36,9 +19,6 @@ def move_chess(cat):
             break
 
 def move_wallhugger(cat):
-    """
-        The cat is programmed to stick to the nearest edge and slides along the perimeter (aka it just moves along the walls)
-    """
     if cat.pos[0] not in (0, cat.grid_size - 1) and cat.pos[1] not in (0, cat.grid_size - 1):
         dist_to_top, dist_to_bottom = cat.pos[0], (cat.grid_size - 1) - cat.pos[0]
         dist_to_left, dist_to_right = cat.pos[1], (cat.grid_size - 1) - cat.pos[1]
@@ -64,10 +44,6 @@ def move_wallhugger(cat):
             cat.pos[1] += dc
 
 def move_skittish(cat):
-    """
-        This cat flees when approached. If CatBot is within 3 tiles, it will flee to the farthest valid tile. 
-        Otherwise, it has a 30% chance to move around randomly.
-    """
     r, c = cat.pos
     pr, pc = cat.player_pos
     dist = cat.current_distance
@@ -105,11 +81,6 @@ def move_skittish(cat):
         cat.pos[1] = chosen[1]
 
 def move_matador(cat):
-    """
-        This cat is a true Sanchez bullfighter. It stays at the center of the arena 
-        and attempts to dodge CatBot's moves. If CatBot is within 2 tiles, it will try to sidestep perpendicularly.
-        Otherwise, it has a 60% chance to casually pace toward the center of the arena
-    """
     r, c = cat.pos
     pr, pc = cat.player_pos
     dist = cat.current_distance
@@ -124,7 +95,6 @@ def move_matador(cat):
         return
 
     if dist <= 2:
-        # 75% chance to succeed in a perfect perpendicular dodge
         if random.random() < 0.75:
             row_diff = pr - r
             col_diff = pc - c
@@ -148,7 +118,6 @@ def move_matador(cat):
                 cat.pos[1] = chosen[3]
                 return
                 
-        # If the dodge fails (25% fumble), do a basic flee away from CatBot
         best_moves = []
         max_dist = -1
         for dr, dc, nr, nc in candidates:
@@ -168,7 +137,6 @@ def move_matador(cat):
     center_r = cat.grid_size // 2
     center_c = cat.grid_size // 2
     
-    # 60% chance to casually pace toward the center if he isn't already there
     if (r != center_r or c != center_c) and random.random() < 0.60:
         best_moves = []
         min_center_dist = 999
@@ -217,11 +185,9 @@ BEHAVIOR_DICT = {
 }
 
 def get_locked_behavior():
-    """Returns the chosen behavior locked for this script execution."""
     key = SELECTED_KITTY.lower().strip()
     if key in BEHAVIOR_DICT:
         return BEHAVIOR_DICT[key]
     else:
-        # fallback to random if "random" or an unknown option is selected
         name, func = random.choice(list(BEHAVIOR_DICT.values()))
         return f"{name} [Random Selection]", func

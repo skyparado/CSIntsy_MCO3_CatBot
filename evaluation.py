@@ -2,10 +2,7 @@ import numpy as np
 from cat_env import make_env
 
 def evaluate_q_table(q_table, cat_name: str, num_episodes: int = 100, max_steps: int = 60):
-    """
-        Evaluates a trained Q-table over multiple episodes using greedy actions (no exploration).
-        Prints success rate, average step count, best, and worst runs.
-    """
+
     eval_env = make_env(cat_type=cat_name)
     
     cat_caught_count = 0
@@ -25,12 +22,12 @@ def evaluate_q_table(q_table, cat_name: str, num_episodes: int = 100, max_steps:
             done = terminated or truncated
             steps += 1
 
-        if terminated:  # Cat caught successfully
+        if terminated: 
             cat_caught_count += 1
             total_successful_steps += steps
             step_counts.append(steps)
 
-    # Output benchmark summary
+
     print("\n===========================================")
     print(f"           EVALUATION BENCHMARK            ")
     print("===========================================")

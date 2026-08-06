@@ -67,10 +67,6 @@ class Cat(ABC):
             if abs(diff) > 0.01:
                 self.visual_pos[i] += np.clip(diff * animation_speed * dt, -1, 1)
 
-####################################
-# CAT BEHAVIOR IMPLEMENTATIONS     #
-####################################
-
 class BatmeowCat(Cat):
     def _get_sprite_path(self) -> str:
         return "images/batmeow-dp.png"
@@ -234,44 +230,18 @@ class SquiddyboiCat(Cat):
         self.pos[0] = new_r
         self.pos[1] = new_c
 
-#####################################
-# TRAINER CAT IMPLEMENTATION        #
-#####################################
-# You can modify the behavior of    #
-# this cat to test your learning    #
-# algorithm. This cat will not part #
-# of the grading.                   #
-#####################################
-
 class TrainerCat(Cat):
-    """A customizable cat for students to implement and test their own behavior algorithms.
-    
-    This cat provides access to:
-    - self.pos: Current cat position as [row, col]
-    - self.player_pos: Current player position
-    - self.prev_player_pos: Previous player position
-    - self.last_player_action: Last action (0:Up, 1:Down, 2:Left, 3:Right)
-    - self.current_distance: Current Manhattan distance to player
-    - self.prev_distance: Previous Manhattan distance to player
-    - self.grid_size: Size of the grid (e.g., 8 for 8x8 grid)
-    
-    Helper methods:
-    - self.player_moved_closer(): Returns True if player's last move decreased distance
-    """
     _has_printed_banner = False  
 
     def __init__(self, grid_size: int, tile_size: int):
         super().__init__(grid_size, tile_size)
 
-        # custom_kitties is our own add-on, so fall back to the original
-        # stay-in-place behaviour if it is not present.
         try:
             import custom_kitties
             self.behavior_name, self.current_behavior = custom_kitties.get_locked_behavior()
         except ImportError:
             self.behavior_name, self.current_behavior = "stationary (default)", None
         
-        # Print the type of TrainerCat at the start of the game.
         if not TrainerCat._has_printed_banner:
             print("\n" + "=" * 50)
             print(f"TrainerCat locked in as: {self.behavior_name}")
@@ -289,18 +259,7 @@ class TrainerCat(Cat):
             self.current_behavior(self)
     
 
-#######################################
-# END OF CAT BEHAVIOR IMPLEMENTATIONS #
-#######################################
-
 class CatChaseEnv(gym.Env):
-    """Simple 8x8 grid world where an agent tries to catch a randomly moving cat.
-
-    Observation: Dict with 'agent' and 'cat' positions as (row, col) each in [0..7].
-    Action space: Discrete(4) -> 0:Up,1:Down,2:Left,3:Right
-    Reward: +1 when agent catches cat (episode ends), -0.01 per step to encourage speed.
-    """
-
     metadata = {"render.modes": ["human"]}
 
     def __init__(self, grid_size: int = 8, tile_size: int = 64, cat_type: str = "peekaboo"):
